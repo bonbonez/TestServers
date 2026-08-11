@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.turbo/
+
+# secrets & generated keys — never commit real secrets or signing keys
+.env
+.env.*
+!.env.example
+*.pem
+.keys/
+
+# misc
+*.log
+.DS_Store

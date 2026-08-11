@@ -1,0 +1,33 @@
+# Optional: run the two backends together.
+# These are throwaway TEST servers — do NOT expose these ports to a public network.
+services:
+  oauth-server:
+    image: node:20
+    working_dir: /repo
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm --filter oauth-server build && pnpm --filter oauth-server start"
+    environment:
+      HOST: 0.0.0.0
+      NODE_ENV: development
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:7200:7200"
+    volumes:
+      - .:/repo
+
+  mcp-server:
+    image: node:20
+    working_dir: /repo
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm --filter mcp-server build && pnpm --filter mcp-server start"
+    environment:
+      HOST: 0.0.0.0
+      NODE_ENV: development
+      MCP_OAUTH_JWKS_URL: http://oauth-server:7200/.well-known/jwks.json
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:7100:7100"
+    depends_on:
+      - oauth-server
+    volumes:
+      - .:/repo

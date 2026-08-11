@@ -1,0 +1,50 @@
+import express, { type Express, type Request, type Response } from "express";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { buildMcpServer } from "./tools.js";
+import { bearerAuth, oauthAuth } from "./auth.js";
+
+/**
+ * One MCP server definition behind four auth routes. The transport is stateless — a fresh
+ * server + transport is created per request (fine for a test double).
+ */
+export function createApp(): Express {
+  const app = express();
+  app.use(express.json());
+
+  app.use((req, res, next) => {
+    res.on("finish", () => {
+      console.log(
+        JSON.stringify({
+          app: "mcp-server",
+          method: req.method,
+          path: req.path,
+          status: res.statusCode,
+        }),
+      );
+    });
+    next();
+  });
+
+  app.get("/healthz", (_req, res) => {
+    res.json({ ok: true });
+  });
+
+  const handleMcp = async (req: Request, res: Response) => {
+    const server = buildMcpServer();
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+    res.on("close", () => {
+      void transport.close();
+      void server.close();
+    });
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  };
+
+  app.post("/mcp/none", handleMcp);
+  app.post("/mcp/bearer", bearerAuth, handleMcp);
+  app.post("/mcp/oauth", oauthAuth, handleMcp);
+
+  return app;
+}

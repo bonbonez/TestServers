@@ -1,0 +1,24 @@
+{
+  "name": "test-servers",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Local test doubles for developing and e2e-testing AI platform integrations.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.12.3",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  }
+}
