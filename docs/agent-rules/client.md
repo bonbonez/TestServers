@@ -37,7 +37,7 @@ styling system.
 ## Grids/tables
 
 - Each description cell should be line-clamped.
-- Each table should exist in its own file (for example `AiFlowTable`), which renders the
+- Each table should exist in its own file (for example `UserTable`), which renders the
   MUI table (`Table`/`DataGrid`) inside.
 - Sorting and column order should be persisted to `localStorage` via a `useLocalStorage`
   hook.
@@ -45,7 +45,7 @@ styling system.
 ## Pages and Components
 
 - Each page should live in `src/pages`. Naming — kebab-case directory. For example:
-  `src/pages/ai-flow/AiFlowPage.tsx`.
+  `src/pages/user/UserPage.tsx`.
 - Each reusable component should live in `src/components`. Each page-specific component
   should live in `src/pages/PAGE_NAME/components`.
 - All multiline text fields should be vertically resizable (using CSS).
@@ -58,7 +58,7 @@ styling system.
 - Each icon should live in `src/icons`, and be exported from there. Make sure any new icon
   is implemented like the existing ones.
 - Icons should always be named using this formula: "Icon" + name + size (16/20/24).
-  Example: `IconCopy16`, `IconAiFlow20`.
+  Example: `IconCopy16`, `IconClose20`.
 - Icon components should always be typed as `React.FC<React.HTMLProps<SVGSVGElement>>`, and
   the props should be passed to the `svg` element.
 

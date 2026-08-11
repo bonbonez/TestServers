@@ -4,7 +4,7 @@ services:
   oauth-server:
     image: node:20
     working_dir: /repo
-    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm --filter oauth-server build && pnpm --filter oauth-server start"
+    command: sh -c "corepack enable && yarn install --immutable && yarn workspace oauth-server build && yarn workspace oauth-server start"
     environment:
       HOST: 0.0.0.0
       NODE_ENV: development
@@ -18,7 +18,7 @@ services:
   mcp-server:
     image: node:20
     working_dir: /repo
-    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm --filter mcp-server build && pnpm --filter mcp-server start"
+    command: sh -c "corepack enable && yarn install --immutable && yarn workspace mcp-server build && yarn workspace mcp-server start"
     environment:
       HOST: 0.0.0.0
       NODE_ENV: development

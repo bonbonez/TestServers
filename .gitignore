@@ -5,12 +5,19 @@ node_modules/
 dist/
 .turbo/
 
+# yarn (berry, node-modules linker) — release binary comes from corepack
+.yarn/*
+.pnp.*
+
 # secrets & generated keys — never commit real secrets or signing keys
 .env
 .env.*
 !.env.example
 *.pem
 .keys/
+
+# editor / IDE
+.idea/
 
 # misc
 *.log

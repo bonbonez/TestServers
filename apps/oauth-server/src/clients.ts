@@ -32,7 +32,7 @@ export const CLIENTS: Array<OAuthClient> = [
     clientId: "api-cred-client",
     clientSecret: "dev-api-cred-secret",
     grants: ["client_credentials"],
-    notes: "the platform OAuth API credential.",
+    notes: "OAuth API credential (client-credentials).",
   },
 ];
 

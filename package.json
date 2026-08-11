@@ -2,13 +2,17 @@
   "name": "test-servers",
   "private": true,
   "version": "0.0.0",
-  "description": "Local test doubles for developing and e2e-testing AI platform integrations.",
+  "description": "Local test doubles for developing and e2e-testing MCP and OAuth client integrations.",
   "license": "MIT",
   "type": "module",
-  "packageManager": "pnpm@10.12.3",
+  "packageManager": "yarn@4.9.2",
   "engines": {
     "node": ">=20"
   },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
