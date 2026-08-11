@@ -2,10 +2,12 @@ import { readFileSync } from "node:fs";
 import { createServer as createHttpServer } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
 import { logBootConfig } from "@test-servers/config";
+import { openStore } from "@test-servers/store";
 import { env } from "./env.js";
 import { createApp } from "./app.js";
 
-const app = createApp();
+const store = openStore();
+const app = createApp(store);
 
 logBootConfig("mcp-server", env);
 

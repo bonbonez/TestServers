@@ -86,20 +86,44 @@ TestServers/
 │   ├── tsconfig/      # @test-servers/tsconfig — shared tsconfig bases (node.json, react.json)
 │   ├── eslint-config/ # @test-servers/eslint-config — one shared flat config
 │   ├── tokens/        # @test-servers/tokens — RS256 JWT mint + JWKS + verify
-│   └── config/        # @test-servers/config — zod env parsing + safe-boot logging
+│   ├── config/        # @test-servers/config — zod env parsing + safe-boot logging
+│   └── store/         # @test-servers/store — SQLite credential store (source of truth)
 └── apps/
     ├── mcp-server/       # Node + TS  (port 7100)
     ├── oauth-server/     # Node + TS  (port 7200)
-    └── oauth-login-web/  # TS + React + Vite + Material UI  (dev port 7201)
+    ├── oauth-login-web/  # TS + React + Vite + Material UI  (dev port 7201)
+    ├── config-server/    # Node + TS — admin API over the credential store (port 7300)
+    └── admin-web/        # TS + React + Vite + Material UI — credentials console (dev port 7301)
 ```
 
 Internal packages are scoped `@test-servers/*` and referenced with Yarn's `workspace:*`
 protocol. Turbo caches `build` / `lint` / `typecheck` / `test`; `dev` and `start` are
 long-running.
 
+## Credentials console
+
+All creds (the MCP bearer token, OAuth clients, token TTLs, audience, redirect allow-list,
+and the resource-API static/basic creds) live in a shared SQLite store
+(`@test-servers/store`, at `.data/creds.db`). It is the **single source of truth**:
+`mcp-server` and `oauth-server` read it live on every request, so edits take effect without
+a restart.
+
+- **`config-server`** (`:7300`) exposes a small REST API over the store.
+- **`admin-web`** (`:7301`) is a Material UI console: a **setup wizard** (prefilled with
+  generated dev defaults, all editable) on first run, then a dashboard to **view / copy /
+  edit** every cred per app, manage OAuth clients, and **Copy `.env`**.
+
+```bash
+yarn workspace config-server dev   # :7300 admin API
+yarn workspace admin-web dev       # :7301 console — open http://localhost:7301
+```
+
+On first run the store seeds itself from `.env` (or the documented defaults). Delete
+`.data/creds.db` to re-seed from scratch.
+
 ## Dummy client registry
 
-All fake — see `apps/oauth-server/src/clients.ts`.
+Seeded into the store on first run; manage them in the console (or via `config-server`).
 
 | client_id | client_secret | grants | notes |
 |---|---|---|---|

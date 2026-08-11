@@ -68,20 +68,17 @@ export interface VerifyOptions {
 }
 
 export interface Verifier {
-  (token: string): Promise<JWTPayload>;
+  (token: string, options?: VerifyOptions): Promise<JWTPayload>;
 }
 
 /**
  * Build a verifier that fetches the signer's public key from a remote JWKS URL — this is
  * how the MCP server validates tokens without sharing a secret with the OAuth server.
  */
-export function createRemoteVerifier(
-  jwksUrl: string,
-  options: VerifyOptions = {},
-): Verifier {
+export function createRemoteVerifier(jwksUrl: string): Verifier {
   const jwks = createRemoteJWKSet(new URL(jwksUrl));
 
-  return async (token) => {
+  return async (token, options = {}) => {
     const { payload } = await jwtVerify(token, jwks, {
       algorithms: ["RS256"],
       audience: options.audience,

@@ -5,8 +5,8 @@ import express, {
   type NextFunction,
 } from "express";
 import type { Signer } from "@test-servers/tokens";
+import type { Store, Grant } from "@test-servers/store";
 import { env } from "./env.js";
-import { findClient, verifyClientSecret, type Grant } from "./clients.js";
 import {
   issueAuthCode,
   consumeAuthCode,
@@ -15,7 +15,9 @@ import {
 } from "./store.js";
 
 /**
- * The dummy OAuth 2.0 authorization server + protected resource API.
+ * The dummy OAuth 2.0 authorization server + protected resource API. All creds (clients,
+ * TTLs, audience, redirect allow-list, static API creds) come from the shared credential
+ * store and are read live on each request, so admin-console edits apply without a restart.
  *
  * TEST-ONLY shortcuts (see README safety banner): CORS is wide open for localhost, there
  * is no consent persistence, and the login step accepts any username with no password.
@@ -65,7 +67,7 @@ function buildRedirect(
   return url.toString();
 }
 
-export function createApp(signer: Signer): Express {
+export function createApp(signer: Signer, store: Store): Express {
   const app = express();
 
   app.use(express.json());
@@ -109,8 +111,9 @@ export function createApp(signer: Signer): Express {
   // ---- Authorization endpoint: validate, then hand off to the DEV login UI. ----
   app.get("/oauth/authorize", (req, res) => {
     const { response_type, client_id, redirect_uri, state, scope } = req.query;
+    const settings = store.getSettings();
 
-    if (typeof redirect_uri !== "string" || !env.OAUTH_ALLOWED_REDIRECT_URIS.includes(redirect_uri)) {
+    if (typeof redirect_uri !== "string" || !settings.allowedRedirectUris.includes(redirect_uri)) {
       // Never open-redirect: reject an unknown redirect_uri with a plain 400.
       sendOAuthError(res, 400, "invalid_request", "unknown redirect_uri");
       return;
@@ -120,7 +123,7 @@ export function createApp(signer: Signer): Express {
       sendOAuthError(res, 400, "invalid_request", "missing client_id");
       return;
     }
-    const client = findClient(client_id);
+    const client = store.getClient(client_id);
     if (!client || !client.grants.includes("authorization_code")) {
       sendOAuthError(res, 400, "invalid_request", "unknown or ineligible client_id");
       return;
@@ -149,13 +152,14 @@ export function createApp(signer: Signer): Express {
   // ---- Consent callback from the React login UI. ----
   app.post("/oauth/authorize/consent", (req, res) => {
     const { username, allow, client_id, redirect_uri, state, scope } = req.body;
+    const settings = store.getSettings();
 
-    if (typeof redirect_uri !== "string" || !env.OAUTH_ALLOWED_REDIRECT_URIS.includes(redirect_uri)) {
+    if (typeof redirect_uri !== "string" || !settings.allowedRedirectUris.includes(redirect_uri)) {
       sendOAuthError(res, 400, "invalid_request", "unknown redirect_uri");
       return;
     }
 
-    const client = typeof client_id === "string" ? findClient(client_id) : undefined;
+    const client = typeof client_id === "string" ? store.getClient(client_id) : undefined;
     if (!client || !client.grants.includes("authorization_code")) {
       sendOAuthError(res, 400, "invalid_request", "unknown or ineligible client_id");
       return;
@@ -178,7 +182,7 @@ export function createApp(signer: Signer): Express {
       redirectUri: redirect_uri,
       scope: typeof scope === "string" && scope ? scope : "read",
       sub: typeof username === "string" && username ? username : "anonymous",
-      expiresAt: Date.now() + env.AUTH_CODE_TTL_SECONDS * 1000,
+      expiresAt: Date.now() + settings.authCodeTtlSeconds * 1000,
     });
 
     res.json({
@@ -189,13 +193,14 @@ export function createApp(signer: Signer): Express {
   // ---- Token endpoint. ----
   app.post("/oauth/token", async (req, res) => {
     const grantType = req.body.grant_type as Grant | undefined;
+    const settings = store.getSettings();
     const { clientId, clientSecret } = readClientCredentials(req);
 
     if (!clientId || !clientSecret) {
       sendOAuthError(res, 401, "invalid_client", "missing client credentials");
       return;
     }
-    const client = verifyClientSecret(clientId, clientSecret);
+    const client = store.verifyClient(clientId, clientSecret);
     if (!client) {
       sendOAuthError(res, 401, "invalid_client", "invalid client credentials");
       return;
@@ -210,11 +215,11 @@ export function createApp(signer: Signer): Express {
         {
           iss: env.OAUTH_ISSUER,
           sub,
-          aud: env.ACCESS_TOKEN_AUDIENCE,
+          aud: settings.accessTokenAudience,
           client_id: client.clientId,
           scope,
         },
-        { expiresInSeconds: env.ACCESS_TOKEN_TTL_SECONDS },
+        { expiresInSeconds: settings.accessTokenTtlSeconds },
       );
 
     if (grantType === "client_credentials") {
@@ -223,7 +228,7 @@ export function createApp(signer: Signer): Express {
       res.json({
         access_token: accessToken,
         token_type: "Bearer",
-        expires_in: env.ACCESS_TOKEN_TTL_SECONDS,
+        expires_in: settings.accessTokenTtlSeconds,
         scope,
       });
       return;
@@ -242,12 +247,12 @@ export function createApp(signer: Signer): Express {
         clientId: client.clientId,
         scope: record.scope,
         sub: record.sub,
-        expiresAt: Date.now() + env.REFRESH_TOKEN_TTL_SECONDS * 1000,
+        expiresAt: Date.now() + settings.refreshTokenTtlSeconds * 1000,
       });
       res.json({
         access_token: accessToken,
         token_type: "Bearer",
-        expires_in: env.ACCESS_TOKEN_TTL_SECONDS,
+        expires_in: settings.accessTokenTtlSeconds,
         scope: record.scope,
         refresh_token: refreshToken,
       });
@@ -267,12 +272,12 @@ export function createApp(signer: Signer): Express {
         clientId: client.clientId,
         scope: record.scope,
         sub: record.sub,
-        expiresAt: Date.now() + env.REFRESH_TOKEN_TTL_SECONDS * 1000,
+        expiresAt: Date.now() + settings.refreshTokenTtlSeconds * 1000,
       });
       res.json({
         access_token: accessToken,
         token_type: "Bearer",
-        expires_in: env.ACCESS_TOKEN_TTL_SECONDS,
+        expires_in: settings.accessTokenTtlSeconds,
         scope: record.scope,
         refresh_token: rotated,
       });
@@ -331,11 +336,12 @@ export function createApp(signer: Signer): Express {
     res: Response,
     next: NextFunction,
   ) => {
+    const settings = store.getSettings();
     const header = req.header("authorization") ?? "";
 
     if (header.toLowerCase().startsWith("bearer ")) {
       const token = header.slice(7);
-      if (token === env.API_STATIC_BEARER) {
+      if (token === settings.apiStaticBearer) {
         next();
         return;
       }
@@ -351,7 +357,7 @@ export function createApp(signer: Signer): Express {
 
     if (header.toLowerCase().startsWith("basic ")) {
       const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
-      if (decoded === `${env.API_BASIC_USER}:${env.API_BASIC_PASS}`) {
+      if (decoded === `${settings.apiBasicUser}:${settings.apiBasicPass}`) {
         next();
         return;
       }

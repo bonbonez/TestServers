@@ -4,13 +4,14 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { openStore } from "@test-servers/store";
 import { createApp } from "../src/app.js";
 
 let server: Server;
 let baseUrl: string;
 
 before(async () => {
-  server = createServer(createApp());
+  server = createServer(createApp(openStore(":memory:")));
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address() as AddressInfo;
   baseUrl = `http://127.0.0.1:${port}`;

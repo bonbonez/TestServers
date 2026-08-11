@@ -1,17 +1,17 @@
 import { loadConfig, z } from "@test-servers/config";
 
-// Topology only — TTLs, audience, redirect allow-list, client registry and the API
-// static/basic creds all live in the shared store and are read live per request.
+// The admin console needs to render ready-to-copy connection URLs, so config-server knows
+// the other apps' ports/issuer (topology only — no creds live here).
 const schema = z.object({
   HOST: z.string().default("127.0.0.1"),
   NODE_ENV: z.string().default("development"),
+  CONFIG_PORT: z.coerce.number().default(7300),
+  MCP_PORT: z.coerce.number().default(7100),
   OAUTH_PORT: z.coerce.number().default(7200),
   OAUTH_ISSUER: z.string().url().default("http://127.0.0.1:7200"),
   OAUTH_LOGIN_WEB_URL: z.string().url().default("http://127.0.0.1:7201"),
-  TLS_CERT: z.string().optional(),
-  TLS_KEY: z.string().optional(),
 });
 
-export type OAuthEnv = z.infer<typeof schema>;
+export type ConfigEnv = z.infer<typeof schema>;
 
-export const env: OAuthEnv = loadConfig(schema);
+export const env: ConfigEnv = loadConfig(schema);

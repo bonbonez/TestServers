@@ -1,5 +1,5 @@
 {
-  "name": "mcp-server",
+  "name": "config-server",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -13,10 +13,8 @@
     "test": "node --import tsx --test test/**/*.test.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
     "@test-servers/config": "workspace:*",
     "@test-servers/store": "workspace:*",
-    "@test-servers/tokens": "workspace:*",
     "express": "^4.21.2",
     "zod": "^3.24.1"
   },

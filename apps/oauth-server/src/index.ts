@@ -3,11 +3,13 @@ import { createServer as createHttpServer } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
 import { logBootConfig } from "@test-servers/config";
 import { createSigner } from "@test-servers/tokens";
+import { openStore } from "@test-servers/store";
 import { env } from "./env.js";
 import { createApp } from "./app.js";
 
 const signer = createSigner();
-const app = createApp(signer);
+const store = openStore();
+const app = createApp(signer, store);
 
 logBootConfig("oauth-server", { ...env, signingKeyId: signer.kid });
 

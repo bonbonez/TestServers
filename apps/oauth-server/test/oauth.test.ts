@@ -5,16 +5,19 @@ import type { AddressInfo } from "node:net";
 
 const REDIRECT_URI =
   "http://localhost:5173/integration-accounts/mcp/oauth/callback";
-// env.ts reads process.env at import time, so configure the allow-list before importing.
+// The store seeds itself from the environment on first open, so set the allow-list and an
+// isolated in-memory database before importing anything that opens the store.
 process.env.OAUTH_ALLOWED_REDIRECT_URIS = REDIRECT_URI;
+process.env.CREDS_DB_PATH = ":memory:";
 
 let server: Server;
 let baseUrl: string;
 
 before(async () => {
   const { createSigner } = await import("@test-servers/tokens");
+  const { openStore } = await import("@test-servers/store");
   const { createApp } = await import("../src/app.js");
-  const app = createApp(createSigner());
+  const app = createApp(createSigner(), openStore(":memory:"));
   server = createServer(app);
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address() as AddressInfo;

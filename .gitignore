@@ -5,6 +5,9 @@ node_modules/
 dist/
 .turbo/
 
+# local credential store (SQLite) — dev data, never committed
+.data/
+
 # yarn (berry, node-modules linker) — release binary comes from corepack
 .yarn/*
 .pnp.*
