@@ -199,7 +199,10 @@ export function createApp(signer: Signer, store: Store): Express {
       return;
     }
 
-    const mintAccessToken = (sub: string, scope: string) =>
+    // The `grant` claim lets resource servers gate tools/behaviour by how the token was
+    // obtained (e.g. user-context tools only for authorization_code). Refreshed tokens
+    // keep "authorization_code" since they continue that user's session.
+    const mintAccessToken = (sub: string, scope: string, grant: Grant) =>
       signer.sign(
         {
           iss: env.OAUTH_ISSUER,
@@ -207,13 +210,14 @@ export function createApp(signer: Signer, store: Store): Express {
           aud: settings.accessTokenAudience,
           client_id: client.clientId,
           scope,
+          grant,
         },
         { expiresInSeconds: settings.accessTokenTtlSeconds },
       );
 
     if (grantType === "client_credentials") {
       const scope = typeof req.body.scope === "string" ? req.body.scope : "read";
-      const accessToken = await mintAccessToken(client.clientId, scope);
+      const accessToken = await mintAccessToken(client.clientId, scope, "client_credentials");
       res.json({
         access_token: accessToken,
         token_type: "Bearer",
@@ -231,7 +235,7 @@ export function createApp(signer: Signer, store: Store): Express {
         sendOAuthError(res, 400, "invalid_grant", "invalid or expired authorization code");
         return;
       }
-      const accessToken = await mintAccessToken(record.sub, record.scope);
+      const accessToken = await mintAccessToken(record.sub, record.scope, "authorization_code");
       const refreshToken = issueRefreshToken({
         clientId: client.clientId,
         scope: record.scope,
@@ -255,7 +259,7 @@ export function createApp(signer: Signer, store: Store): Express {
         sendOAuthError(res, 400, "invalid_grant", "invalid or expired refresh token");
         return;
       }
-      const accessToken = await mintAccessToken(record.sub, record.scope);
+      const accessToken = await mintAccessToken(record.sub, record.scope, "authorization_code");
       // Rotation: the old refresh token was already consumed; issue a fresh one.
       const rotated = issueRefreshToken({
         clientId: client.clientId,

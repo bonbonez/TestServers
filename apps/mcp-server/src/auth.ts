@@ -49,10 +49,13 @@ export function createOAuthAuth(store: Store) {
       return;
     }
     try {
-      await verifyJwt(header.slice(7), {
+      const claims = await verifyJwt(header.slice(7), {
         audience: accessTokenAudience || undefined,
         requiredScope: requiredScope || undefined,
       });
+      // Expose the grant/subject so the route can gate user-context tools.
+      res.locals.grant = typeof claims.grant === "string" ? claims.grant : "";
+      res.locals.subject = typeof claims.sub === "string" ? claims.sub : "";
       next();
     } catch (error) {
       unauthorized(res, error instanceof Error ? error.message : "invalid token");

@@ -144,6 +144,19 @@ Seeded into the store on first run; manage them in the console (or via `config-s
   client `mcp-authcode-client` / `dev-mcp-authcode-secret`, scope `read`, then use the
   platform **Connect** popup.
 
+## MCP tools & authorization
+
+| Tool | Available under |
+|---|---|
+| `ping`, `get_server_time`, `echo`, `get_weather`, `get_user` | any auth mode (none / bearer / OAuth) |
+| `whoami` | **only** the OAuth 2.0 **authorization-code** grant (a signed-in user session) |
+
+`whoami` returns the token subject's profile, so it is exposed only when the access token
+carries `grant: "authorization_code"` — client-credentials, bearer, and no-auth
+connections don't see it. Clients are told which tools need which authorization two ways:
+each tool's `description`, and the server `instructions` returned at initialize, which name
+the current connection's auth mode and whether `whoami` is available on it.
+
 ## Testing connection states
 
 - **Auth failure**: change the MCP expected scope/token, or restart `oauth-server` (the

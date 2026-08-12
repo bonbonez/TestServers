@@ -36,6 +36,11 @@ async function tokenRequest(body: Record<string, string>): Promise<Response> {
   });
 }
 
+function decodeClaims(accessToken: string): Record<string, unknown> {
+  const payload = accessToken.split(".")[1] ?? "";
+  return JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+}
+
 test("client_credentials grant returns an access token and no refresh token", async () => {
   const res = await tokenRequest({
     grant_type: "client_credentials",
@@ -48,6 +53,7 @@ test("client_credentials grant returns an access token and no refresh token", as
   assert.equal(body.token_type, "Bearer");
   assert.ok(body.access_token);
   assert.equal(body.refresh_token, undefined);
+  assert.equal(decodeClaims(body.access_token).grant, "client_credentials");
 });
 
 test("invalid client secret is rejected with 401 invalid_client", async () => {
@@ -106,6 +112,7 @@ test("refresh token rotates and the old one stops working", async () => {
   });
   const firstBody = await first.json();
   assert.ok(firstBody.refresh_token);
+  assert.equal(decodeClaims(firstBody.access_token).grant, "authorization_code");
 
   const refreshed = await tokenRequest({
     grant_type: "refresh_token",

@@ -4,8 +4,19 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { openStore } from "@test-servers/store";
 import { createApp } from "../src/app.js";
+import { buildMcpServer } from "../src/tools.js";
+
+async function connectInMemory(server: McpServer): Promise<Client> {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "test", version: "0.0.0" });
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+  return client;
+}
 
 let server: Server;
 let baseUrl: string;
@@ -45,6 +56,34 @@ test("ping returns canned data", async () => {
   );
   const result = await client.callTool({ name: "ping", arguments: {} });
   assert.deepEqual(result.content, [{ type: "text", text: "pong" }]);
+  await client.close();
+});
+
+test("whoami is hidden without the authorization-code grant", async () => {
+  const client = await connectInMemory(
+    buildMcpServer({ authLabel: "OAuth client-credentials" }),
+  );
+  const { tools } = await client.listTools();
+  assert.equal(tools.some((tool) => tool.name === "whoami"), false);
+  await client.close();
+});
+
+test("whoami is exposed for the authorization-code grant", async () => {
+  const client = await connectInMemory(
+    buildMcpServer({ includeAuthCodeTools: true, subject: "ada" }),
+  );
+  const { tools } = await client.listTools();
+  assert.equal(tools.some((tool) => tool.name === "whoami"), true);
+  const result = await client.callTool({ name: "whoami", arguments: {} });
+  assert.match(JSON.stringify(result.content), /ada@example\.test/);
+  await client.close();
+});
+
+test("instructions advertise the whoami authorization requirement", async () => {
+  const client = await connectInMemory(buildMcpServer({ authLabel: "no auth" }));
+  const instructions = client.getInstructions() ?? "";
+  assert.match(instructions, /whoami/);
+  assert.match(instructions, /authorization-code/);
   await client.close();
 });
 
