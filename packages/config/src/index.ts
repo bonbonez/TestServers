@@ -78,4 +78,6 @@ export function logBootConfig(
   }
 }
 
+export { resolveTlsOptions, type TlsEnv, type TlsOptions } from "./tls.js";
+
 export { z };

@@ -7,6 +7,10 @@
 The backends run as systemd services bound to `127.0.0.1`; nginx serves the two React apps
 as static files and reverse-proxies the APIs.
 
+> In dev the backends serve HTTPS with a self-signed cert. **On a VM they run with
+> `TLS=false`** (set in the systemd units) and nginx terminates TLS instead — so there is
+> one certificate to manage, at the edge. See [TLS](#tls-recommended-even-internally).
+
 | Public path | Serves |
 |---|---|
 | `/` | admin credentials console (`admin-web`) |

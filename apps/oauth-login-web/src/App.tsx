@@ -9,8 +9,9 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-const OAUTH_SERVER_URL =
-  import.meta.env.VITE_OAUTH_SERVER_URL ?? "http://127.0.0.1:7200";
+// Same-origin by default: the dev server proxies /oauth to oauth-server (and in prod nginx
+// does the same). Set VITE_OAUTH_SERVER_URL to POST to an absolute origin instead.
+const OAUTH_SERVER_URL = import.meta.env.VITE_OAUTH_SERVER_URL ?? "";
 
 interface AuthorizeParams {
   clientId: string;

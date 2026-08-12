@@ -10,6 +10,7 @@ WorkingDirectory=@APP_DIR@
 EnvironmentFile=@APP_DIR@/.env
 Environment=NODE_ENV=production
 Environment=HOST=127.0.0.1
+Environment=TLS=false
 ExecStart=/usr/bin/env node apps/oauth-server/dist/index.js
 Restart=on-failure
 RestartSec=2

@@ -10,6 +10,9 @@ WorkingDirectory=@APP_DIR@
 EnvironmentFile=@APP_DIR@/.env
 Environment=NODE_ENV=production
 Environment=HOST=127.0.0.1
+Environment=TLS=false
+# Fetch the JWKS from oauth-server directly over localhost HTTP (not through nginx/TLS).
+Environment=MCP_OAUTH_JWKS_URL=http://127.0.0.1:7200/.well-known/jwks.json
 ExecStart=/usr/bin/env node apps/mcp-server/dist/index.js
 Restart=on-failure
 RestartSec=2

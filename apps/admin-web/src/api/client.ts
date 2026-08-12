@@ -1,5 +1,6 @@
-const BASE_URL =
-  import.meta.env.VITE_CONFIG_SERVER_URL ?? "http://127.0.0.1:7300";
+// Default to same-origin: in dev the Vite server proxies `/api` to config-server, and in
+// production nginx does the same. Set VITE_CONFIG_SERVER_URL to call an absolute origin.
+const BASE_URL = import.meta.env.VITE_CONFIG_SERVER_URL ?? "";
 
 async function request<T>(
   path: string,

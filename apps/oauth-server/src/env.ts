@@ -6,8 +6,11 @@ const schema = z.object({
   HOST: z.string().default("127.0.0.1"),
   NODE_ENV: z.string().default("development"),
   OAUTH_PORT: z.coerce.number().default(7200),
-  OAUTH_ISSUER: z.string().url().default("http://127.0.0.1:7200"),
-  OAUTH_LOGIN_WEB_URL: z.string().url().default("http://127.0.0.1:7201"),
+  OAUTH_ISSUER: z.string().url().default("https://localhost:7200"),
+  OAUTH_LOGIN_WEB_URL: z.string().url().default("https://localhost:7201"),
+  // Serve HTTPS (self-signed dev cert unless TLS_CERT/TLS_KEY are set). Set TLS=false for
+  // plain HTTP (e.g. behind a TLS-terminating proxy).
+  TLS: z.string().default("true").transform((value) => value !== "false"),
   TLS_CERT: z.string().optional(),
   TLS_KEY: z.string().optional(),
 });

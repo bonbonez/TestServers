@@ -8,6 +8,7 @@ services:
     environment:
       HOST: 0.0.0.0
       NODE_ENV: development
+      TLS: "false"
     env_file:
       - .env
     ports:
@@ -22,6 +23,7 @@ services:
     environment:
       HOST: 0.0.0.0
       NODE_ENV: development
+      TLS: "false"
       MCP_OAUTH_JWKS_URL: http://oauth-server:7200/.well-known/jwks.json
     env_file:
       - .env

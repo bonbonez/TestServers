@@ -49,7 +49,6 @@ Hard rules for everyone (humans and agents) working in this repo:
 - Yarn ≥ 4, provided by Corepack (`corepack enable`); the version is pinned via the
   root `package.json` `packageManager` field.
 - Optional: Docker + Compose to run the backends together.
-- Optional: [`mkcert`](https://github.com/FiloSottile/mkcert) for local HTTPS.
 
 ## Quick start
 
@@ -57,7 +56,7 @@ Hard rules for everyone (humans and agents) working in this repo:
 cp .env.example .env
 corepack enable
 yarn install
-yarn dev            # all apps: mcp :7100, oauth :7200, login :7201, config :7300, admin :7301
+yarn dev            # mcp :7100, oauth :7200, login :7201, config :7300, admin https://:7301
 # or one app:
 yarn workspace mcp-server dev
 ```
@@ -65,7 +64,9 @@ yarn workspace mcp-server dev
 `yarn dev` runs everything in **watch mode** — editing an app's source (or a shared
 `@test-servers/*` package) rebuilds and restarts the affected server automatically. Stop it
 with `Ctrl+C`; the servers shut down gracefully. Open the admin console at
-**http://localhost:7301**.
+**https://localhost:7301** (served over HTTPS with a self-signed cert via
+`@vitejs/plugin-basic-ssl` — accept the browser warning once). The console proxies `/api`
+to config-server, so it calls its API same-origin.
 
 To host it on a VM with systemd + nginx, see [docs/DEPLOY.md](docs/DEPLOY.md).
 
@@ -73,16 +74,16 @@ To host it on a VM with systemd + nginx, see [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ```bash
 # MCP (no auth) — list tools over the MCP Streamable HTTP transport
-curl -s http://127.0.0.1:7100/mcp/none -H 'content-type: application/json' \
+curl -sk https://localhost:7100/mcp/none -H 'content-type: application/json' \
   -H 'accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
 # OAuth client-credentials token, then call the protected resource
-TOKEN=$(curl -s http://127.0.0.1:7200/oauth/token \
+TOKEN=$(curl -sk https://localhost:7200/oauth/token \
   -d grant_type=client_credentials -d client_id=api-cred-client \
   -d client_secret=dev-api-cred-secret -d scope=read \
   | node -pe 'JSON.parse(require("fs").readFileSync(0)).access_token')
-curl -s http://127.0.0.1:7200/resource/profile -H "authorization: Bearer $TOKEN"
+curl -sk https://localhost:7200/resource/profile -H "authorization: Bearer $TOKEN"
 ```
 
 ## Structure
@@ -123,7 +124,7 @@ a restart.
 
 ```bash
 yarn workspace config-server dev   # :7300 admin API
-yarn workspace admin-web dev       # :7301 console — open http://localhost:7301
+yarn workspace admin-web dev       # console — open https://localhost:7301 (self-signed)
 ```
 
 On first run the store seeds itself from `.env` (or the documented defaults). Delete
@@ -141,13 +142,13 @@ Seeded into the store on first run; manage them in the console (or via `config-s
 
 ## Example client configs
 
-- **No auth** → URL `http://127.0.0.1:7100/mcp/none`.
+- **No auth** → URL `https://localhost:7100/mcp/none`.
 - **Bearer** → URL `/mcp/bearer`, token `dev-mcp-bearer-token-abc123`.
 - **OAuth client credentials** → URL `/mcp/oauth`, token URL
-  `http://127.0.0.1:7200/oauth/token`, client `mcp-cc-client` / `dev-mcp-cc-secret`,
+  `https://localhost:7200/oauth/token`, client `mcp-cc-client` / `dev-mcp-cc-secret`,
   scope `read`.
 - **OAuth authorization code** → URL `/mcp/oauth`, authorization URL
-  `http://127.0.0.1:7200/oauth/authorize`, token URL `http://127.0.0.1:7200/oauth/token`,
+  `https://localhost:7200/oauth/authorize`, token URL `https://localhost:7200/oauth/token`,
   client `mcp-authcode-client` / `dev-mcp-authcode-secret`, scope `read`, then use the
   platform **Connect** popup.
 
@@ -182,11 +183,25 @@ color-coded status, duration) plus boot/listen lines with secrets redacted.
 - `LOG_LEVEL` sets the threshold (`debug` | `info` | `warn` | `error`, default `info`).
 - `NO_COLOR` disables colors even on a TTY.
 
-## HTTPS (optional)
+## HTTPS
 
-Default is plain HTTP on localhost. If a flow needs https, generate a cert with `mkcert`
-(`mkcert -install`) and set `TLS_CERT` / `TLS_KEY` paths; backends start an https listener
-when both are set. Never commit certs/keys (`*.pem` is git-ignored).
+Everything runs over **HTTPS on `localhost` by default**, so the dev setup matches what a
+real client expects (secure-context browser APIs, `https` redirect URIs, no mixed content).
+
+- **Backends** (`oauth`, `mcp`, `config`) generate a **self-signed dev certificate** for
+  `localhost` / `127.0.0.1` on first boot and cache it in the git-ignored `.keys/`. Use
+  `curl -k` (or import the cert) when calling them by hand.
+- **Frontends** are served over HTTPS by `@vitejs/plugin-basic-ssl`, and proxy their API
+  calls same-origin (`/api` → config-server, `/oauth` → oauth-server), so there is no
+  mixed content and no second certificate to accept.
+- In dev the backends skip verification for outbound calls between each other (the certs
+  are self-signed) and log a warning saying so. This is disabled when
+  `NODE_ENV=production`.
+- Bring your own cert with `TLS_CERT` / `TLS_KEY`, or set **`TLS=false`** to serve plain
+  HTTP — which is what the systemd units do, since nginx terminates TLS in that setup
+  (see [docs/DEPLOY.md](docs/DEPLOY.md)).
+
+Never commit certs/keys — `*.pem` and `.keys/` are git-ignored.
 
 ## License
 

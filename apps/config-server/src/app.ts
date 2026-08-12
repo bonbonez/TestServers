@@ -34,7 +34,8 @@ const clientSchema = z.object({
 });
 
 function buildConnections() {
-  const mcpBase = `http://${env.HOST}:${env.MCP_PORT}`;
+  // mcp-server has no public URL of its own, so derive its scheme from our TLS setting.
+  const mcpBase = `${env.TLS ? "https" : "http"}://localhost:${env.MCP_PORT}`;
   return {
     host: env.HOST,
     mcp: {
@@ -63,6 +64,7 @@ function buildEnvFile(store: Store): string {
     "# Generated from the credential store by the admin console. Dummy dev values only.",
     "HOST=127.0.0.1",
     "NODE_ENV=development",
+    `TLS=${env.TLS}`,
     "",
     `MCP_PORT=${env.MCP_PORT}`,
     `MCP_BEARER_TOKEN=${s.mcpBearerToken}`,

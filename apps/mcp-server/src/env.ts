@@ -9,7 +9,10 @@ const schema = z.object({
   MCP_OAUTH_JWKS_URL: z
     .string()
     .url()
-    .default("http://127.0.0.1:7200/.well-known/jwks.json"),
+    .default("https://localhost:7200/.well-known/jwks.json"),
+  // Serve HTTPS (self-signed dev cert unless TLS_CERT/TLS_KEY are set). Set TLS=false for
+  // plain HTTP (e.g. behind a TLS-terminating proxy).
+  TLS: z.string().default("true").transform((value) => value !== "false"),
   TLS_CERT: z.string().optional(),
   TLS_KEY: z.string().optional(),
 });
