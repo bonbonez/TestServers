@@ -197,9 +197,20 @@ real client expects (secure-context browser APIs, `https` redirect URIs, no mixe
 - In dev the backends skip verification for outbound calls between each other (the certs
   are self-signed) and log a warning saying so. This is disabled when
   `NODE_ENV=production`.
-- Bring your own cert with `TLS_CERT` / `TLS_KEY`, or set **`TLS=false`** to serve plain
-  HTTP — which is what the systemd units do, since nginx terminates TLS in that setup
-  (see [docs/DEPLOY.md](docs/DEPLOY.md)).
+- Bring your own cert with `TLS_CERT` / `TLS_KEY`, or serve **plain HTTP** with:
+
+  ```bash
+  TLS=false yarn dev
+  ```
+
+  That switches *everything* — both backends and both Vite dev servers — to `http://`, and
+  the issuer / JWKS / login URL defaults follow the scheme automatically. It's also what
+  the systemd units use, since nginx terminates TLS in that setup (see
+  [docs/DEPLOY.md](docs/DEPLOY.md)).
+
+  Note: `OAUTH_ISSUER`, `MCP_OAUTH_JWKS_URL` and `OAUTH_LOGIN_WEB_URL` are commented out in
+  `.env.example` on purpose, so their scheme tracks `TLS`. Uncommenting one pins it, and a
+  pinned `https://` URL with `TLS=false` will not work.
 
 Never commit certs/keys — `*.pem` and `.keys/` are git-ignored.
 
