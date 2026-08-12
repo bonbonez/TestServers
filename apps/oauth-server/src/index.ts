@@ -26,3 +26,16 @@ server.listen(env.OAUTH_PORT, env.HOST, () => {
   const scheme = env.TLS_CERT && env.TLS_KEY ? "https" : "http";
   logger.info("listening", { url: `${scheme}://${env.HOST}:${env.OAUTH_PORT}` });
 });
+
+const shutdown = (signal: string) => {
+  logger.info("shutting down", { signal });
+  server.closeAllConnections();
+  server.close(() => {
+    store.close();
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(0), 2000).unref();
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));

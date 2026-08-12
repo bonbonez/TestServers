@@ -10,9 +10,24 @@ const app = createApp(store);
 
 logBootConfig(logger, env);
 
-createServer(app).listen(env.CONFIG_PORT, env.HOST, () => {
+const server = createServer(app);
+
+server.listen(env.CONFIG_PORT, env.HOST, () => {
   logger.info("listening", {
     url: `http://${env.HOST}:${env.CONFIG_PORT}`,
     api: "/api/config",
   });
 });
+
+const shutdown = (signal: string) => {
+  logger.info("shutting down", { signal });
+  server.closeAllConnections();
+  server.close(() => {
+    store.close();
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(0), 2000).unref();
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));

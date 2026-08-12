@@ -1,0 +1,20 @@
+[Unit]
+Description=Test Servers - MCP server (DUMMY / test-only)
+After=network.target test-servers-oauth.service
+PartOf=test-servers.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@APP_DIR@
+EnvironmentFile=@APP_DIR@/.env
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+ExecStart=/usr/bin/env node apps/mcp-server/dist/index.js
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

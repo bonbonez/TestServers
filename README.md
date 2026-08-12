@@ -57,10 +57,17 @@ Hard rules for everyone (humans and agents) working in this repo:
 cp .env.example .env
 corepack enable
 yarn install
-yarn dev                       # mcp-server :7100, oauth-server :7200, oauth-login-web :7201
+yarn dev            # all apps: mcp :7100, oauth :7200, login :7201, config :7300, admin :7301
 # or one app:
 yarn workspace mcp-server dev
 ```
+
+`yarn dev` runs everything in **watch mode** — editing an app's source (or a shared
+`@test-servers/*` package) rebuilds and restarts the affected server automatically. Stop it
+with `Ctrl+C`; the servers shut down gracefully. Open the admin console at
+**http://localhost:7301**.
+
+To host it on a VM with systemd + nginx, see [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ### Smoke test
 

@@ -1,0 +1,21 @@
+[Unit]
+Description=Test Servers - OAuth server (DUMMY / test-only)
+After=network.target
+PartOf=test-servers.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@APP_DIR@
+EnvironmentFile=@APP_DIR@/.env
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+ExecStart=/usr/bin/env node apps/oauth-server/dist/index.js
+Restart=on-failure
+RestartSec=2
+# Small hardening; these are test servers, not production.
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

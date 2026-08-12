@@ -27,3 +27,16 @@ server.listen(env.MCP_PORT, env.HOST, () => {
     routes: "POST /mcp/none, /mcp/bearer, /mcp/oauth",
   });
 });
+
+const shutdown = (signal: string) => {
+  logger.info("shutting down", { signal });
+  server.closeAllConnections();
+  server.close(() => {
+    store.close();
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(0), 2000).unref();
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));

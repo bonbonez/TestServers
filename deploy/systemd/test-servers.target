@@ -1,0 +1,7 @@
+[Unit]
+Description=Test Servers - all backends (DUMMY / test-only)
+Wants=test-servers-oauth.service test-servers-mcp.service test-servers-config.service
+After=test-servers-oauth.service test-servers-mcp.service test-servers-config.service
+
+[Install]
+WantedBy=multi-user.target
