@@ -1,7 +1,9 @@
 import express, { type Express } from "express";
 import { z } from "@test-servers/config";
+import { httpLogger } from "@test-servers/logger";
 import type { Store } from "@test-servers/store";
 import { env } from "./env.js";
+import { logger } from "./logger.js";
 
 /**
  * REST API over the shared credential store, backing the admin console. Reads and writes
@@ -86,6 +88,7 @@ function buildEnvFile(store: Store): string {
 export function createApp(store: Store): Express {
   const app = express();
   app.use(express.json());
+  app.use(httpLogger(logger));
 
   // TEST-ONLY: permissive CORS so the localhost admin console can call this API.
   app.use((req, res, next) => {

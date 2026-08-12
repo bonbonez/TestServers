@@ -87,7 +87,8 @@ TestServers/
 │   ├── eslint-config/ # @test-servers/eslint-config — one shared flat config
 │   ├── tokens/        # @test-servers/tokens — RS256 JWT mint + JWKS + verify
 │   ├── config/        # @test-servers/config — zod env parsing + safe-boot logging
-│   └── store/         # @test-servers/store — SQLite credential store (source of truth)
+│   ├── store/         # @test-servers/store — SQLite credential store (source of truth)
+│   └── logger/        # @test-servers/logger — colorized (TTY) / JSON (piped) logging
 └── apps/
     ├── mcp-server/       # Node + TS  (port 7100)
     ├── oauth-server/     # Node + TS  (port 7200)
@@ -150,6 +151,16 @@ Seeded into the store on first run; manage them in the console (or via `config-s
 - **Unreachable**: stop `mcp-server`.
 - **Mid-session refresh**: the access-token TTL is short (120s) — idle, then message again
   to exercise refresh + refresh-token rotation.
+
+## Logging
+
+The backends log through `@test-servers/logger`: one line per request (method, path,
+color-coded status, duration) plus boot/listen lines with secrets redacted.
+
+- **Colorized** when stdout/stderr is a TTY; **one JSON object per line** when piped or
+  redirected (machine-readable).
+- `LOG_LEVEL` sets the threshold (`debug` | `info` | `warn` | `error`, default `info`).
+- `NO_COLOR` disables colors even on a TTY.
 
 ## HTTPS (optional)
 

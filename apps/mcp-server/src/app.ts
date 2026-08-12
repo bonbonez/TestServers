@@ -1,8 +1,10 @@
 import express, { type Express, type Request, type Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { httpLogger } from "@test-servers/logger";
 import type { Store } from "@test-servers/store";
 import { buildMcpServer } from "./tools.js";
 import { createBearerAuth, createOAuthAuth } from "./auth.js";
+import { logger } from "./logger.js";
 
 /**
  * One MCP server definition behind four auth routes. The transport is stateless — a fresh
@@ -11,20 +13,7 @@ import { createBearerAuth, createOAuthAuth } from "./auth.js";
 export function createApp(store: Store): Express {
   const app = express();
   app.use(express.json());
-
-  app.use((req, res, next) => {
-    res.on("finish", () => {
-      console.log(
-        JSON.stringify({
-          app: "mcp-server",
-          method: req.method,
-          path: req.path,
-          status: res.statusCode,
-        }),
-      );
-    });
-    next();
-  });
+  app.use(httpLogger(logger));
 
   app.get("/healthz", (_req, res) => {
     res.json({ ok: true });

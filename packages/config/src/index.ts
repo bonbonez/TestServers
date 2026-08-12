@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { config as loadDotenv } from "dotenv";
+import type { Logger } from "@test-servers/logger";
 import { z } from "zod";
 
 /**
@@ -61,18 +62,18 @@ function redact(key: string, value: unknown): unknown {
  * when the server is bound wider than localhost.
  */
 export function logBootConfig(
-  appName: string,
+  logger: Logger,
   config: Record<string, unknown>,
 ): void {
   const redacted = Object.fromEntries(
     Object.entries(config).map(([key, value]) => [key, redact(key, value)]),
   );
-  console.log(`[${appName}] starting with config:`, redacted);
+  logger.info("starting", redacted);
 
   if (config.HOST && config.HOST !== "127.0.0.1" && config.HOST !== "localhost") {
-    console.warn(
-      `[${appName}] ⚠️  HOST is "${config.HOST}" — this test server is NOT secure and ` +
-        "must never be exposed to a public network.",
+    logger.warn(
+      "bound wider than localhost — this test server is NOT secure and must never be exposed to a public network",
+      { host: config.HOST },
     );
   }
 }

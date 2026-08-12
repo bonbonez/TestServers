@@ -5,11 +5,12 @@ import { logBootConfig } from "@test-servers/config";
 import { openStore } from "@test-servers/store";
 import { env } from "./env.js";
 import { createApp } from "./app.js";
+import { logger } from "./logger.js";
 
 const store = openStore();
 const app = createApp(store);
 
-logBootConfig("mcp-server", env);
+logBootConfig(logger, env);
 
 const server =
   env.TLS_CERT && env.TLS_KEY
@@ -21,8 +22,8 @@ const server =
 
 server.listen(env.MCP_PORT, env.HOST, () => {
   const scheme = env.TLS_CERT && env.TLS_KEY ? "https" : "http";
-  console.log(`[mcp-server] listening on ${scheme}://${env.HOST}:${env.MCP_PORT}`);
-  console.log(
-    `[mcp-server] routes: POST /mcp/none, /mcp/bearer, /mcp/oauth`,
-  );
+  logger.info("listening", {
+    url: `${scheme}://${env.HOST}:${env.MCP_PORT}`,
+    routes: "POST /mcp/none, /mcp/bearer, /mcp/oauth",
+  });
 });

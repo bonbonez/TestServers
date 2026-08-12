@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@test-servers/config": "workspace:*",
+    "@test-servers/logger": "workspace:*",
     "@test-servers/store": "workspace:*",
     "@test-servers/tokens": "workspace:*",
     "express": "^4.21.2",

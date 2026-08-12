@@ -6,12 +6,13 @@ import { createSigner } from "@test-servers/tokens";
 import { openStore } from "@test-servers/store";
 import { env } from "./env.js";
 import { createApp } from "./app.js";
+import { logger } from "./logger.js";
 
 const signer = createSigner();
 const store = openStore();
 const app = createApp(signer, store);
 
-logBootConfig("oauth-server", { ...env, signingKeyId: signer.kid });
+logBootConfig(logger, { ...env, signingKeyId: signer.kid });
 
 const server =
   env.TLS_CERT && env.TLS_KEY
@@ -23,5 +24,5 @@ const server =
 
 server.listen(env.OAUTH_PORT, env.HOST, () => {
   const scheme = env.TLS_CERT && env.TLS_KEY ? "https" : "http";
-  console.log(`[oauth-server] listening on ${scheme}://${env.HOST}:${env.OAUTH_PORT}`);
+  logger.info("listening", { url: `${scheme}://${env.HOST}:${env.OAUTH_PORT}` });
 });

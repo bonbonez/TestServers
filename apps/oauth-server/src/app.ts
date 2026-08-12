@@ -4,9 +4,11 @@ import express, {
   type Response,
   type NextFunction,
 } from "express";
+import { httpLogger } from "@test-servers/logger";
 import type { Signer } from "@test-servers/tokens";
 import type { Store, Grant } from "@test-servers/store";
 import { env } from "./env.js";
+import { logger } from "./logger.js";
 import {
   issueAuthCode,
   consumeAuthCode,
@@ -85,20 +87,7 @@ export function createApp(signer: Signer, store: Store): Express {
     next();
   });
 
-  // One structured log line per request, with the status filled in on finish.
-  app.use((req, res, next) => {
-    res.on("finish", () => {
-      console.log(
-        JSON.stringify({
-          app: "oauth-server",
-          method: req.method,
-          path: req.path,
-          status: res.statusCode,
-        }),
-      );
-    });
-    next();
-  });
+  app.use(httpLogger(logger));
 
   app.get("/healthz", (_req, res) => {
     res.json({ ok: true });
