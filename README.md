@@ -128,7 +128,8 @@ yarn workspace admin-web dev       # console — open https://localhost:7301 (se
 ```
 
 On first run the store seeds itself from `.env` (or the documented defaults). Delete
-`.data/creds.db` to re-seed from scratch.
+`.data/creds.db` to re-seed from scratch (under systemd the store lives at
+`/var/lib/test-servers/creds.db` — see [docs/DEPLOY.md](docs/DEPLOY.md)).
 
 ## Dummy client registry
 
