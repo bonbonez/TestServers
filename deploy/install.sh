@@ -103,12 +103,17 @@ echo "==> generating .env.systemd"
 echo "==> installing dependencies"
 "${YARN[@]}" install --immutable
 
+# Backends and packages first, with the two React apps excluded: each needs its own
+# VITE_BASE, so they are built individually below. Letting the plain `turbo run build` touch
+# them last would overwrite those dists with default-base ("/") builds, and oauth-login-web
+# would then ask for /assets/… instead of /login/assets/… — served as the admin console's
+# fallback HTML, i.e. a blank page.
+echo "==> building backends + packages"
+"${YARN[@]}" build --filter='!admin-web' --filter='!oauth-login-web'
+
 echo "==> building frontends (served behind nginx, same-origin API calls)"
 VITE_BASE=/ VITE_CONFIG_SERVER_URL="" "${YARN[@]}" workspace admin-web build
 VITE_BASE=/login/ VITE_OAUTH_SERVER_URL="" "${YARN[@]}" workspace oauth-login-web build
-
-echo "==> building backends + packages"
-"${YARN[@]}" build
 
 echo "==> installing systemd units"
 for unit in test-servers-oauth.service test-servers-mcp.service test-servers-config.service test-servers.target; do

@@ -8,6 +8,12 @@ root @APP_DIR@/apps/admin-web/dist;
 index index.html;
 
 # --- DEV login / consent SPA (built with VITE_BASE=/login/) ---
+# Without this, a bare /login falls through to the admin console's SPA fallback below and
+# renders a blank page. $is_args$args keeps the ?client_id=…&state=… query intact.
+location = /login {
+    return 301 /login/$is_args$args;
+}
+
 location /login/ {
     alias @APP_DIR@/apps/oauth-login-web/dist/;
     index index.html;
