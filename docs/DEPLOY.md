@@ -83,6 +83,31 @@ PUBLIC_URL=https://box.example.com:7443 \
 The location blocks live in a separate `test-servers-locations.inc` that both vhost
 variants `include`, so the HTTP-only and TLS layouts stay in sync.
 
+## Firewall
+
+The installer configures nginx and systemd but deliberately does **not** touch the firewall —
+opening a port is a network-exposure decision. On a non-standard `HTTPS_PORT` you must open it
+yourself, or browsers get "This site can't be reached" while `curl` **on the box still works**
+(loopback bypasses the firewall zone entirely, so local smoke tests prove nothing here).
+
+```bash
+# RHEL / firewalld — check first, then open
+sudo firewall-cmd --list-all
+sudo firewall-cmd --permanent --add-port=7443/tcp --add-port=7090/tcp
+sudo firewall-cmd --reload
+
+# Debian / ufw
+sudo ufw allow 7443/tcp && sudo ufw allow 7090/tcp
+```
+
+Prefer scoping it to the network that needs access rather than the whole zone — there is no
+auth in front of the admin console:
+
+```bash
+sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" \
+  source address="10.0.0.0/8" port port="7443" protocol="tcp" accept'
+```
+
 ## Manage
 
 ```bash
